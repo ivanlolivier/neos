@@ -33,6 +33,34 @@ export default function EditProfileScreen() {
   const [phone, setPhone] = useState(profile?.phone ?? "");
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
 
+  // Extended profile fields
+  const [dateOfBirth, setDateOfBirth] = useState(
+    profile?.date_of_birth
+      ? (() => {
+          const [y, m, d] = profile.date_of_birth.split("-");
+          return `${d}/${m}/${y}`;
+        })()
+      : ""
+  );
+  const [restingHR, setRestingHR] = useState(
+    profile?.resting_heart_rate?.toString() ?? ""
+  );
+  const [maxHR, setMaxHR] = useState(
+    profile?.max_heart_rate?.toString() ?? ""
+  );
+  const [runningExperience, setRunningExperience] = useState(
+    profile?.running_experience ?? ""
+  );
+  const [raceExperience, setRaceExperience] = useState(
+    profile?.race_experience ?? ""
+  );
+  const [sportGoals, setSportGoals] = useState(
+    profile?.sport_goals ?? ""
+  );
+  const [extraSportGoals, setExtraSportGoals] = useState(
+    profile?.extra_sport_goals ?? ""
+  );
+
   const updateProfile = useUpdateProfile();
   const uploadAvatar = useUploadAvatar();
 
@@ -44,10 +72,33 @@ export default function EditProfileScreen() {
       return;
     }
 
+    // Parse date dd/mm/yyyy → yyyy-mm-dd
+    let parsedDob: string | null = null;
+    if (dateOfBirth.trim()) {
+      const parts = dateOfBirth.trim().split("/");
+      if (parts.length === 3) {
+        const [d, m, y] = parts;
+        if (d && m && y && y.length === 4) {
+          parsedDob = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+        }
+      }
+      if (!parsedDob) {
+        Alert.alert("Error", "La fecha de nacimiento debe tener formato dd/mm/aaaa");
+        return;
+      }
+    }
+
     try {
       await updateProfile.mutateAsync({
         full_name: fullName.trim(),
         phone: phone.trim() || undefined,
+        date_of_birth: parsedDob,
+        resting_heart_rate: restingHR ? parseInt(restingHR, 10) : null,
+        max_heart_rate: maxHR ? parseInt(maxHR, 10) : null,
+        running_experience: runningExperience || null,
+        race_experience: raceExperience.trim() || null,
+        sport_goals: sportGoals.trim() || null,
+        extra_sport_goals: extraSportGoals.trim() || null,
       });
 
       showSuccess("Perfil actualizado");
@@ -253,6 +304,188 @@ export default function EditProfileScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Datos deportivos */}
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          Datos deportivos
+        </Text>
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Fecha de nacimiento
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.card,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={dateOfBirth}
+              onChangeText={setDateOfBirth}
+              placeholder="dd/mm/aaaa"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="numbers-and-punctuation"
+            />
+          </View>
+
+          <View style={styles.rowInputs}>
+            <View style={[styles.inputGroup, { flex: 1 }]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                FC reposo (bpm)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={restingHR}
+                onChangeText={setRestingHR}
+                placeholder="55"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+              />
+            </View>
+            <View style={[styles.inputGroup, { flex: 1, marginLeft: 12 }]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                FC máxima (bpm)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={maxHR}
+                onChangeText={setMaxHR}
+                placeholder="190"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Experiencia corriendo
+            </Text>
+            <View style={styles.pillsRow}>
+              {["Principiante", "Intermedio", "Avanzado"].map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[
+                    styles.pill,
+                    {
+                      backgroundColor:
+                        runningExperience === level
+                          ? colors.tint
+                          : colors.card,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  onPress={() =>
+                    setRunningExperience(
+                      runningExperience === level ? "" : level
+                    )
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.pillText,
+                      {
+                        color:
+                          runningExperience === level ? "#fff" : colors.text,
+                      },
+                    ]}
+                  >
+                    {level}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Experiencia en carreras
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.card,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={raceExperience}
+              onChangeText={setRaceExperience}
+              placeholder="ej: 5K, 10K, maratón..."
+              placeholderTextColor={colors.textSecondary}
+            />
+          </View>
+        </View>
+
+        {/* Objetivos */}
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          Objetivos
+        </Text>
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Objetivos deportivos
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                styles.textArea,
+                {
+                  backgroundColor: colors.card,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={sportGoals}
+              onChangeText={setSportGoals}
+              placeholder="ej: Correr mi primera maratón, bajar de 50 min en 10K..."
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Objetivos extra-deportivos
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                styles.textArea,
+                {
+                  backgroundColor: colors.card,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={extraSportGoals}
+              onChangeText={setExtraSportGoals}
+              placeholder="ej: Mejorar salud, hábito de entrenamiento, hacer amigos..."
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -339,5 +572,37 @@ const styles = StyleSheet.create({
   helperText: {
     fontSize: 12,
     marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginTop: 24,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  rowInputs: {
+    flexDirection: "row",
+  },
+  pillsRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  pill: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+  },
+  pillText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  textArea: {
+    height: 80,
+    paddingTop: 12,
+    textAlignVertical: "top",
   },
 });

@@ -10,6 +10,13 @@ type UpdateProfileData = {
   phone?: string;
   avatar_url?: string;
   vam?: number;
+  date_of_birth?: string | null;
+  resting_heart_rate?: number | null;
+  max_heart_rate?: number | null;
+  running_experience?: string | null;
+  race_experience?: string | null;
+  sport_goals?: string | null;
+  extra_sport_goals?: string | null;
 };
 
 export function useUpdateProfile() {

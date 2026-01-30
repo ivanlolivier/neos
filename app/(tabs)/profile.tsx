@@ -79,8 +79,29 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        <View style={[styles.roleBadge, { backgroundColor: colors.tint }]}>
-          <Text style={styles.roleBadgeText}>{getRoleBadge()}</Text>
+        <View style={styles.badgesRow}>
+          <View style={[styles.roleBadge, { backgroundColor: colors.tint }]}>
+            <Text style={styles.roleBadgeText}>{getRoleBadge()}</Text>
+          </View>
+
+          {profile?.date_of_birth && (() => {
+            const birth = new Date(profile.date_of_birth);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return (
+              <View style={[styles.infoBadge, { backgroundColor: colors.backgroundSecondary }]}>
+                <Text style={[styles.infoBadgeText, { color: colors.text }]}>{age} años</Text>
+              </View>
+            );
+          })()}
+
+          {profile?.running_experience && (
+            <View style={[styles.infoBadge, { backgroundColor: colors.backgroundSecondary }]}>
+              <Text style={[styles.infoBadgeText, { color: colors.text }]}>{profile.running_experience}</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -160,6 +181,51 @@ export default function ProfileScreen() {
               color={colors.textSecondary}
             />
           </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push("/personal-records")}
+          >
+            <View style={styles.menuItemLeft}>
+              <FontAwesome name="trophy" size={20} color={colors.tint} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>
+                Mis Records
+              </Text>
+            </View>
+            <FontAwesome
+              name="chevron-right"
+              size={14}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+
+          {(profile?.resting_heart_rate || profile?.max_heart_rate) && (
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.menuItem}>
+                <View style={styles.menuItemLeft}>
+                  <FontAwesome name="heartbeat" size={20} color="#ef4444" />
+                  <View>
+                    <Text style={[styles.menuItemText, { color: colors.text }]}>
+                      Frecuencia Cardíaca
+                    </Text>
+                    <Text
+                      style={[styles.menuItemSubtext, { color: colors.textSecondary }]}
+                    >
+                      {[
+                        profile.resting_heart_rate && `Reposo: ${profile.resting_heart_rate} bpm`,
+                        profile.max_heart_rate && `Máx: ${profile.max_heart_rate} bpm`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </>
+          )}
         </View>
       </View>
 
@@ -323,6 +389,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
+  badgesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 6,
+  },
   roleBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -332,6 +404,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
     fontWeight: "600",
+  },
+  infoBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  infoBadgeText: {
+    fontSize: 12,
+    fontWeight: "500",
   },
   menuSection: {
     marginBottom: 24,

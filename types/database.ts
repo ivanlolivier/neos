@@ -17,6 +17,13 @@ export type Database = {
           role: "member" | "coach" | "admin";
           phone: string | null;
           vam: number | null;
+          date_of_birth: string | null;
+          resting_heart_rate: number | null;
+          max_heart_rate: number | null;
+          running_experience: string | null;
+          race_experience: string | null;
+          sport_goals: string | null;
+          extra_sport_goals: string | null;
           garmin_access_token: string | null;
           garmin_refresh_token: string | null;
           healthkit_enabled: boolean;
@@ -31,6 +38,13 @@ export type Database = {
           role?: "member" | "coach" | "admin";
           phone?: string | null;
           vam?: number | null;
+          date_of_birth?: string | null;
+          resting_heart_rate?: number | null;
+          max_heart_rate?: number | null;
+          running_experience?: string | null;
+          race_experience?: string | null;
+          sport_goals?: string | null;
+          extra_sport_goals?: string | null;
           garmin_access_token?: string | null;
           garmin_refresh_token?: string | null;
           healthkit_enabled?: boolean;
@@ -45,6 +59,13 @@ export type Database = {
           role?: "member" | "coach" | "admin";
           phone?: string | null;
           vam?: number | null;
+          date_of_birth?: string | null;
+          resting_heart_rate?: number | null;
+          max_heart_rate?: number | null;
+          running_experience?: string | null;
+          race_experience?: string | null;
+          sport_goals?: string | null;
+          extra_sport_goals?: string | null;
           garmin_access_token?: string | null;
           garmin_refresh_token?: string | null;
           healthkit_enabled?: boolean;
@@ -391,6 +412,47 @@ export type Database = {
           created_at?: string;
         };
       };
+      personal_records: {
+        Row: {
+          id: string;
+          user_id: string;
+          event_name: string;
+          result_seconds: number;
+          distance_km: number | null;
+          date: string | null;
+          location: string | null;
+          notes: string | null;
+          is_official: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          event_name: string;
+          result_seconds: number;
+          distance_km?: number | null;
+          date?: string | null;
+          location?: string | null;
+          notes?: string | null;
+          is_official?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          event_name?: string;
+          result_seconds?: number;
+          distance_km?: number | null;
+          date?: string | null;
+          location?: string | null;
+          notes?: string | null;
+          is_official?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       announcements: {
         Row: {
           id: string;
@@ -481,4 +543,5 @@ export type EventRegistration = Tables<"event_registrations">;
 export type Activity = Tables<"activities">;
 export type Post = Tables<"posts">;
 export type PostPhoto = Tables<"post_photos">;
+export type PersonalRecord = Tables<"personal_records">;
 export type Announcement = Tables<"announcements">;
