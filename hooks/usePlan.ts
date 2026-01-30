@@ -12,6 +12,8 @@ export type WeekendSession = {
   time_minutes?: number;
   rpe?: number;
   observations?: string;
+  avg_heart_rate?: number;
+  max_heart_rate?: number;
   completed: boolean;
 };
 

@@ -112,6 +112,8 @@ function WeekendLogModal({
   const [timeMinutes, setTimeMinutes] = useState("");
   const [rpe, setRpe] = useState("");
   const [observations, setObservations] = useState("");
+  const [avgHR, setAvgHR] = useState("");
+  const [maxHR, setMaxHR] = useState("");
 
   useEffect(() => {
     if (visible && session) {
@@ -119,6 +121,8 @@ function WeekendLogModal({
       setTimeMinutes(formatTimeForInput(session.time_minutes));
       setRpe(session.rpe?.toString() ?? "");
       setObservations(session.observations ?? "");
+      setAvgHR(session.avg_heart_rate?.toString() ?? "");
+      setMaxHR(session.max_heart_rate?.toString() ?? "");
     }
   }, [visible, session]);
 
@@ -128,6 +132,8 @@ function WeekendLogModal({
       time_minutes: parseTimeInput(timeMinutes),
       rpe: rpe ? parseInt(rpe, 10) : undefined,
       observations: observations.trim() || undefined,
+      avg_heart_rate: avgHR ? parseInt(avgHR, 10) : undefined,
+      max_heart_rate: maxHR ? parseInt(maxHR, 10) : undefined,
       completed: true,
     });
   };
@@ -283,6 +289,49 @@ function WeekendLogModal({
                 {RPE_OPTIONS[parseInt(rpe, 10) - 1]?.label} — {RPE_OPTIONS[parseInt(rpe, 10) - 1]?.description}
               </Text>
             )}
+          </View>
+
+          <View style={styles.formRow}>
+            <View style={[styles.formGroup, { flex: 1 }]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                FC prom (bpm)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.backgroundSecondary,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={avgHR}
+                onChangeText={setAvgHR}
+                placeholder="145"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+              />
+            </View>
+            <View style={[styles.formGroup, { flex: 1, marginLeft: 12 }]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                FC max (bpm)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.backgroundSecondary,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={maxHR}
+                onChangeText={setMaxHR}
+                placeholder="175"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+              />
+            </View>
           </View>
 
           <View style={styles.formGroup}>
@@ -585,74 +634,88 @@ export default function PlanScreen() {
 
                 {/* Results (if completed) */}
                 {session.completed && (
-                  <View style={styles.resultsGrid}>
-                    <View style={styles.resultItem}>
-                      <Text
-                        style={[styles.resultValue, { color: colors.text }]}
-                      >
-                        {session.km_total ?? "-"}
-                      </Text>
-                      <Text
-                        style={[styles.resultLabel, { color: colors.textSecondary }]}
-                      >
-                        km
-                      </Text>
+                  <>
+                    <View style={styles.resultsGrid}>
+                      <View style={styles.resultItem}>
+                        <Text
+                          style={[styles.resultValue, { color: colors.text }]}
+                        >
+                          {session.km_total ?? "-"}
+                        </Text>
+                        <Text
+                          style={[styles.resultLabel, { color: colors.textSecondary }]}
+                        >
+                          km
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.resultDivider,
+                          { backgroundColor: colors.border },
+                        ]}
+                      />
+                      <View style={styles.resultItem}>
+                        <Text
+                          style={[styles.resultValue, { color: colors.text }]}
+                        >
+                          {formatTime(session.time_minutes)}
+                        </Text>
+                        <Text
+                          style={[styles.resultLabel, { color: colors.textSecondary }]}
+                        >
+                          tiempo
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.resultDivider,
+                          { backgroundColor: colors.border },
+                        ]}
+                      />
+                      <View style={styles.resultItem}>
+                        <Text
+                          style={[styles.resultValue, { color: colors.text }]}
+                        >
+                          {formatPace(session.km_total, session.time_minutes)}/km
+                        </Text>
+                        <Text
+                          style={[styles.resultLabel, { color: colors.textSecondary }]}
+                        >
+                          ritmo
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.resultDivider,
+                          { backgroundColor: colors.border },
+                        ]}
+                      />
+                      <View style={styles.resultItem}>
+                        <Text
+                          style={[styles.resultValue, { color: colors.text }]}
+                        >
+                          RPE {session.rpe ?? "-"}
+                        </Text>
+                        <Text
+                          style={[styles.resultLabel, { color: colors.textSecondary }]}
+                        >
+                          esfuerzo
+                        </Text>
+                      </View>
                     </View>
-                    <View
-                      style={[
-                        styles.resultDivider,
-                        { backgroundColor: colors.border },
-                      ]}
-                    />
-                    <View style={styles.resultItem}>
-                      <Text
-                        style={[styles.resultValue, { color: colors.text }]}
-                      >
-                        {formatTime(session.time_minutes)}
-                      </Text>
-                      <Text
-                        style={[styles.resultLabel, { color: colors.textSecondary }]}
-                      >
-                        tiempo
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.resultDivider,
-                        { backgroundColor: colors.border },
-                      ]}
-                    />
-                    <View style={styles.resultItem}>
-                      <Text
-                        style={[styles.resultValue, { color: colors.text }]}
-                      >
-                        {formatPace(session.km_total, session.time_minutes)}/km
-                      </Text>
-                      <Text
-                        style={[styles.resultLabel, { color: colors.textSecondary }]}
-                      >
-                        ritmo
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.resultDivider,
-                        { backgroundColor: colors.border },
-                      ]}
-                    />
-                    <View style={styles.resultItem}>
-                      <Text
-                        style={[styles.resultValue, { color: colors.text }]}
-                      >
-                        RPE {session.rpe ?? "-"}
-                      </Text>
-                      <Text
-                        style={[styles.resultLabel, { color: colors.textSecondary }]}
-                      >
-                        esfuerzo
-                      </Text>
-                    </View>
-                  </View>
+
+                    {(session.avg_heart_rate || session.max_heart_rate) && (
+                      <View style={styles.hrRow}>
+                        <FontAwesome name="heartbeat" size={13} color="#ef4444" />
+                        <Text style={[styles.hrText, { color: colors.textSecondary }]}>
+                          {[
+                            session.avg_heart_rate && `${session.avg_heart_rate} bpm prom`,
+                            session.max_heart_rate && `${session.max_heart_rate} bpm máx`,
+                          ].filter(Boolean).join(" · ")}
+                        </Text>
+                      </View>
+                    )}
+                  </>
                 )}
 
                 {/* Action button (only when not completed) */}
@@ -815,6 +878,16 @@ const styles = StyleSheet.create({
     width: 1,
     height: 28,
     opacity: 0.5,
+  },
+  hrRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingLeft: 4,
+  },
+  hrText: {
+    fontSize: 12,
   },
   observations: {
     fontSize: 14,

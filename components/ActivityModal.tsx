@@ -48,6 +48,8 @@ export type ActivityModalSaveData = {
   rpe?: number;
   title?: string;
   notes?: string;
+  avg_heart_rate?: number;
+  max_heart_rate?: number;
 };
 
 type Props = {
@@ -79,6 +81,8 @@ export default function ActivityModal({
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [rpe, setRpe] = useState("");
+  const [avgHR, setAvgHR] = useState("");
+  const [maxHR, setMaxHR] = useState("");
 
   const isEditMode = !!activity;
 
@@ -99,6 +103,8 @@ export default function ActivityModal({
       setTitle(activity.title ?? "");
       setNotes(activity.notes ?? "");
       setRpe("");
+      setAvgHR(activity.avg_heart_rate?.toString() ?? "");
+      setMaxHR(activity.max_heart_rate?.toString() ?? "");
     } else {
       // Reset form for new activity
       setSelectedDate(initialDate ?? new Date());
@@ -107,6 +113,8 @@ export default function ActivityModal({
       setTitle("");
       setNotes("");
       setRpe("");
+      setAvgHR("");
+      setMaxHR("");
     }
   }, [activity, visible, initialDate]);
 
@@ -129,6 +137,8 @@ export default function ActivityModal({
       rpe: rpe ? parseInt(rpe, 10) : undefined,
       title: title.trim() || undefined,
       notes: notes.trim() || undefined,
+      avg_heart_rate: avgHR ? parseInt(avgHR, 10) : undefined,
+      max_heart_rate: maxHR ? parseInt(maxHR, 10) : undefined,
     });
   };
 
@@ -325,6 +335,49 @@ export default function ActivityModal({
                 {RPE_OPTIONS[parseInt(rpe, 10) - 1]?.label} — {RPE_OPTIONS[parseInt(rpe, 10) - 1]?.description}
               </Text>
             )}
+          </View>
+
+          <View style={styles.formRow}>
+            <View style={[styles.formGroup, { flex: 1 }]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                FC prom (bpm)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.backgroundSecondary,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={avgHR}
+                onChangeText={setAvgHR}
+                placeholder="145"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+              />
+            </View>
+            <View style={[styles.formGroup, { flex: 1, marginLeft: 12 }]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                FC max (bpm)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.backgroundSecondary,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={maxHR}
+                onChangeText={setMaxHR}
+                placeholder="175"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+              />
+            </View>
           </View>
 
           <View style={styles.formGroup}>

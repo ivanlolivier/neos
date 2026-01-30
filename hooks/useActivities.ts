@@ -204,6 +204,8 @@ export function useAddActivity() {
       title?: string;
       notes?: string;
       activity_type?: string;
+      avg_heart_rate?: number;
+      max_heart_rate?: number;
     }) => {
       // Calculate pace if we have both distance and duration
       let avg_pace_seconds: number | null = null;
@@ -223,6 +225,8 @@ export function useAddActivity() {
           distance_km: activity.distance_km,
           duration_seconds: activity.duration_seconds,
           avg_pace_seconds,
+          avg_heart_rate: activity.avg_heart_rate ?? null,
+          max_heart_rate: activity.max_heart_rate ?? null,
           title: activity.title,
           notes: activity.notes,
         })
@@ -253,6 +257,8 @@ export function useUpdateActivity() {
       duration_seconds?: number;
       title?: string;
       notes?: string;
+      avg_heart_rate?: number;
+      max_heart_rate?: number;
     }) => {
       // Calculate pace if we have both distance and duration
       let avg_pace_seconds: number | null = null;
@@ -269,6 +275,8 @@ export function useUpdateActivity() {
           distance_km: activity.distance_km,
           duration_seconds: activity.duration_seconds,
           avg_pace_seconds,
+          avg_heart_rate: activity.avg_heart_rate ?? null,
+          max_heart_rate: activity.max_heart_rate ?? null,
           title: activity.title,
           notes: activity.notes,
         })

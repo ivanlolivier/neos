@@ -37,7 +37,7 @@ function StatCard({ icon, label, value, unit, colors }: { icon: string; label: s
   );
 }
 
-function ActivityCard({ activity, colors, onPress, onShare }: { activity: Activity; colors: typeof Colors.dark; onPress: () => void; onShare: () => void }) {
+function ActivityCard({ activity, colors, onPress, onShare, maxHeartRate }: { activity: Activity; colors: typeof Colors.dark; onPress: () => void; onShare: () => void; maxHeartRate?: number | null }) {
   const date = new Date(activity.date);
 
   return (
@@ -54,6 +54,20 @@ function ActivityCard({ activity, colors, onPress, onShare }: { activity: Activi
             {activity.duration_seconds && <Text style={[styles.activityStat, { color: colors.textSecondary }]}>{formatDuration(activity.duration_seconds)}</Text>}
             {activity.avg_pace_seconds && <Text style={[styles.activityStat, { color: colors.textSecondary }]}>{formatPace(activity.avg_pace_seconds)} /km</Text>}
           </View>
+          {activity.avg_heart_rate && (
+            <View style={styles.activityHR}>
+              <FontAwesome name="heartbeat" size={11} color="#ef4444" />
+              <Text style={[styles.activityStat, { color: colors.textSecondary }]}>
+                {activity.avg_heart_rate} bpm
+                {maxHeartRate ? ` (${Math.round((activity.avg_heart_rate / maxHeartRate) * 100)}% FC max)` : ""}
+              </Text>
+              {activity.max_heart_rate && (
+                <Text style={[styles.activityStat, { color: colors.textSecondary }]}>
+                  · máx {activity.max_heart_rate}
+                </Text>
+              )}
+            </View>
+          )}
         </View>
         <View style={styles.activityActions}>
           <TouchableOpacity
@@ -152,6 +166,8 @@ export default function StatsScreen() {
           duration_seconds: data.duration_seconds,
           title: data.title,
           notes: data.notes,
+          avg_heart_rate: data.avg_heart_rate,
+          max_heart_rate: data.max_heart_rate,
         },
         {
           onSuccess: () => {
@@ -165,7 +181,11 @@ export default function StatsScreen() {
       );
     } else {
       // Add new activity
-      addActivity.mutate(data, {
+      addActivity.mutate({
+        ...data,
+        avg_heart_rate: data.avg_heart_rate,
+        max_heart_rate: data.max_heart_rate,
+      }, {
         onSuccess: () => {
           closeModal();
           showSuccess("Actividad guardada");
@@ -292,7 +312,12 @@ export default function StatsScreen() {
           const maxKm = Math.max(...kmBreakdown.map((d) => d.km));
           return (
             <View style={[styles.chartContainer, { backgroundColor: colors.card }]}>
-              <Text style={[styles.chartTitle, { color: colors.textSecondary }]}>{period === "year" || period === "lifetime" ? "Km por mes" : "Km por semana"}</Text>
+              <View style={styles.chartHeaderRow}>
+                <Text style={[styles.chartTitle, { color: colors.textSecondary }]}>{period === "year" || period === "lifetime" ? "Km por mes" : "Km por semana"}</Text>
+                <Text style={[styles.chartTotalKm, { color: colors.tint }]}>
+                  {stats?.totalKm ?? 0} km
+                </Text>
+              </View>
               <View style={styles.chartBars}>
                 {kmBreakdown.map((item, i) => (
                   <View key={i} style={styles.chartBarCol}>
@@ -333,7 +358,7 @@ export default function StatsScreen() {
         ) : activities && activities.length > 0 ? (
           <View style={styles.activitiesList}>
             {activities.map((activity) => (
-              <ActivityCard key={activity.id} activity={activity} colors={colors} onPress={() => openEditModal(activity)} onShare={() => handleShareActivity(activity)} />
+              <ActivityCard key={activity.id} activity={activity} colors={colors} onPress={() => openEditModal(activity)} onShare={() => handleShareActivity(activity)} maxHeartRate={profile?.max_heart_rate} />
             ))}
           </View>
         ) : (
@@ -409,12 +434,21 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderRadius: 16,
   },
+  chartHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   chartTitle: {
     fontSize: 12,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    marginBottom: 12,
+  },
+  chartTotalKm: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
   chartBars: {
     flexDirection: "row",
@@ -558,6 +592,12 @@ const styles = StyleSheet.create({
   },
   activityStat: {
     fontSize: 13,
+  },
+  activityHR: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
   },
   activityActions: {
     alignItems: "center",
