@@ -45,6 +45,8 @@ export type TrainingWithSession = Training & {
   session: TrainingSession | null;
   userAttendance: Attendance | null;
   attendeeCount: number;
+  attendeesBySlot: { [slot: string]: AttendeeInfo[] };
+  notGoing: AttendeeInfo[];
 };
 
 // Hook for poll-style view with attendee names
@@ -308,23 +310,24 @@ export function useWeeklyTrainings(weekStart?: Date) {
         attendances = (attendanceData ?? []) as Attendance[];
       }
 
-      // Get attendance counts
-      let attendanceCounts: Record<string, number> = {};
+      // Get all attendances with profile info for this week's sessions
+      let allAttendances: (Attendance & { profiles: Pick<Profile, "full_name" | "avatar_url"> })[] = [];
       if (sessionIds.length > 0) {
-        const { data: countsData, error: countsError } = await supabase
+        const { data: allAttData, error: allAttError } = await supabase
           .from("attendances")
-          .select("session_id")
-          .in("session_id", sessionIds)
-          .eq("status", "confirmed");
+          .select("*, profiles(full_name, avatar_url)")
+          .in("session_id", sessionIds);
 
-        if (!countsError && countsData) {
-          attendanceCounts = (countsData as { session_id: string }[]).reduce(
-            (acc, { session_id }) => {
-              acc[session_id] = (acc[session_id] || 0) + 1;
-              return acc;
-            },
-            {} as Record<string, number>
-          );
+        if (!allAttError && allAttData) {
+          allAttendances = allAttData as any;
+        }
+      }
+
+      // Build attendance counts from the full data
+      const attendanceCounts: Record<string, number> = {};
+      for (const att of allAttendances) {
+        if (att.status === "confirmed") {
+          attendanceCounts[att.session_id] = (attendanceCounts[att.session_id] || 0) + 1;
         }
       }
 
@@ -356,6 +359,32 @@ export function useWeeklyTrainings(weekStart?: Date) {
           0
         );
 
+        // Build attendees by slot and not-going list
+        const attendeesBySlot: { [slot: string]: AttendeeInfo[] } = {};
+        for (const slot of training.time_slots) {
+          attendeesBySlot[slot] = [];
+        }
+        const notGoing: AttendeeInfo[] = [];
+
+        const trainingSessionIds = new Set(trainingSessions.map((s) => s.id));
+        for (const att of allAttendances) {
+          if (!trainingSessionIds.has(att.session_id)) continue;
+          const profile = (att as any).profiles;
+          if (!profile) continue;
+          const info: AttendeeInfo = {
+            id: att.user_id,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            time_slot: att.time_slot,
+            status: att.status,
+          };
+          if (att.status === "not_going") {
+            notGoing.push(info);
+          } else if (att.status === "confirmed" && attendeesBySlot[att.time_slot]) {
+            attendeesBySlot[att.time_slot].push(info);
+          }
+        }
+
         // Use first session for compatibility (or null if none)
         const session = trainingSessions[0] ?? null;
 
@@ -364,6 +393,8 @@ export function useWeeklyTrainings(weekStart?: Date) {
           session,
           userAttendance,
           attendeeCount,
+          attendeesBySlot,
+          notGoing,
         });
       }
 
@@ -447,6 +478,8 @@ export function useUpcomingTrainings() {
           session,
           userAttendance,
           attendeeCount: 0,
+          attendeesBySlot: {},
+          notGoing: [],
           date: trainingDate,
         });
       }

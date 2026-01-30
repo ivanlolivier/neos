@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Modal,
+  Image,
 } from "react-native";
 import { useState, useCallback } from "react";
 import {
@@ -30,6 +32,7 @@ import {
   getTrainingTypeLabel,
   getTrainingTypeColor,
   type TrainingWithSession,
+  type AttendeeInfo,
 } from "@/hooks/useTrainings";
 import { useActivitiesByRange, useAddActivity, formatDistance, formatDuration } from "@/hooks/useActivities";
 import { usePlan, type WeekendPlanContent, type WeekendSession } from "@/hooks/usePlan";
@@ -62,6 +65,8 @@ export default function CalendarScreen() {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalInitialDate, setModalInitialDate] = useState<Date | undefined>();
+  const [attendeesModal, setAttendeesModal] = useState<TrainingWithSession | null>(null);
+  const [expandedAvatar, setExpandedAvatar] = useState<{ url: string; name: string } | null>(null);
 
   const isRefetching = isRefetchingTrainings || isRefetchingActivities || isRefetchingPlan;
   const onRefresh = useCallback(() => {
@@ -292,7 +297,11 @@ export default function CalendarScreen() {
                               {getTrainingTypeLabel(training.type)}
                             </Text>
                             {training.attendeeCount > 0 && (
-                              <View style={styles.attendeeCount}>
+                              <TouchableOpacity
+                                style={styles.attendeeCount}
+                                onPress={() => setAttendeesModal(training)}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
                                 <FontAwesome
                                   name="user"
                                   size={10}
@@ -306,7 +315,7 @@ export default function CalendarScreen() {
                                 >
                                   {training.attendeeCount}
                                 </Text>
-                              </View>
+                              </TouchableOpacity>
                             )}
                           </View>
 
@@ -457,6 +466,126 @@ export default function CalendarScreen() {
         colors={colors}
         initialDate={modalInitialDate}
       />
+
+      {/* Attendees Modal */}
+      <Modal
+        visible={!!attendeesModal}
+        animationType="slide"
+        transparent
+      >
+        <TouchableOpacity
+          style={styles.attendeesOverlay}
+          activeOpacity={1}
+          onPress={() => { setExpandedAvatar(null); setAttendeesModal(null); }}
+        >
+          <View
+            style={[styles.attendeesContent, { backgroundColor: colors.card }]}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.attendeesHandle}>
+              <View style={[styles.attendeesHandleBar, { backgroundColor: colors.border }]} />
+            </View>
+            <Text style={[styles.attendeesTitle, { color: colors.text }]}>
+              {attendeesModal?.name}
+            </Text>
+
+            {attendeesModal && (
+              <ScrollView style={styles.attendeesScroll}>
+                {attendeesModal.time_slots.map((slot) => {
+                  const slotAttendees = attendeesModal.attendeesBySlot[slot] ?? [];
+                  if (slotAttendees.length === 0) return null;
+                  return (
+                    <View key={slot} style={styles.attendeesSlotSection}>
+                      <View style={styles.attendeesSlotHeader}>
+                        <FontAwesome name="clock-o" size={13} color={colors.tint} />
+                        <Text style={[styles.attendeesSlotLabel, { color: colors.tint }]}>
+                          {formatTimeSlot(slot)}
+                        </Text>
+                        <Text style={[styles.attendeesSlotCount, { color: colors.textSecondary }]}>
+                          ({slotAttendees.length})
+                        </Text>
+                      </View>
+                      {slotAttendees.map((a) => (
+                        <View key={a.id} style={styles.attendeeRow}>
+                          <TouchableOpacity
+                            style={[styles.attendeeAvatar, { backgroundColor: colors.backgroundSecondary }]}
+                            onPress={() => a.avatar_url ? setExpandedAvatar({ url: a.avatar_url, name: a.full_name }) : null}
+                            activeOpacity={a.avatar_url ? 0.7 : 1}
+                          >
+                            {a.avatar_url ? (
+                              <Image source={{ uri: a.avatar_url }} style={styles.attendeeAvatarImg} />
+                            ) : (
+                              <Text style={[styles.attendeeInitial, { color: colors.tint }]}>
+                                {a.full_name.charAt(0).toUpperCase()}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                          <Text style={[styles.attendeeName, { color: colors.text }]}>
+                            {a.full_name}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                })}
+
+                {attendeesModal.notGoing.length > 0 && (
+                  <View style={styles.attendeesSlotSection}>
+                    <View style={styles.attendeesSlotHeader}>
+                      <FontAwesome name="times-circle" size={13} color={colors.error} />
+                      <Text style={[styles.attendeesSlotLabel, { color: colors.error }]}>
+                        No van
+                      </Text>
+                      <Text style={[styles.attendeesSlotCount, { color: colors.textSecondary }]}>
+                        ({attendeesModal.notGoing.length})
+                      </Text>
+                    </View>
+                    {attendeesModal.notGoing.map((a) => (
+                      <View key={a.id} style={styles.attendeeRow}>
+                        <TouchableOpacity
+                          style={[styles.attendeeAvatar, { backgroundColor: colors.backgroundSecondary }]}
+                          onPress={() => a.avatar_url ? setExpandedAvatar({ url: a.avatar_url, name: a.full_name }) : null}
+                          activeOpacity={a.avatar_url ? 0.7 : 1}
+                        >
+                          {a.avatar_url ? (
+                            <Image source={{ uri: a.avatar_url }} style={styles.attendeeAvatarImg} />
+                          ) : (
+                            <Text style={[styles.attendeeInitial, { color: colors.textSecondary }]}>
+                              {a.full_name.charAt(0).toUpperCase()}
+                            </Text>
+                          )}
+                        </TouchableOpacity>
+                        <Text style={[styles.attendeeName, { color: colors.textSecondary }]}>
+                          {a.full_name}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </ScrollView>
+            )}
+
+            {/* Expanded Avatar Overlay */}
+            {expandedAvatar && (
+              <TouchableOpacity
+                style={styles.avatarOverlay}
+                activeOpacity={1}
+                onPress={() => setExpandedAvatar(null)}
+              >
+                <View style={styles.avatarExpanded}>
+                  <Image
+                    source={{ uri: expandedAvatar.url }}
+                    style={styles.avatarExpandedImg}
+                  />
+                  <Text style={styles.avatarExpandedName}>
+                    {expandedAvatar.name}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 }
@@ -607,5 +736,97 @@ const styles = StyleSheet.create({
   indicatorCompleted: {
     textDecorationLine: "line-through",
     opacity: 0.7,
+  },
+  attendeesOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  attendeesContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    maxHeight: "60%",
+  },
+  attendeesHandle: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  attendeesHandleBar: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+  },
+  attendeesTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 16,
+  },
+  attendeesScroll: {
+    flexGrow: 0,
+  },
+  attendeesSlotSection: {
+    marginBottom: 16,
+  },
+  attendeesSlotHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 10,
+  },
+  attendeesSlotLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  attendeesSlotCount: {
+    fontSize: 13,
+  },
+  attendeeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 6,
+  },
+  attendeeAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  attendeeAvatarImg: {
+    width: 32,
+    height: 32,
+  },
+  attendeeInitial: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  attendeeName: {
+    fontSize: 15,
+  },
+  avatarOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  avatarExpanded: {
+    alignItems: "center",
+    gap: 16,
+  },
+  avatarExpandedImg: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+  },
+  avatarExpandedName: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
