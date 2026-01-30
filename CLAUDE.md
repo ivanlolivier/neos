@@ -10,7 +10,7 @@ App mobile para club de running (~100 usuarios). Permite gestionar entrenamiento
 - **UI:** Componentes custom con StyleSheet, FontAwesome icons
 - **Toasts:** react-native-toast-message (JS puro, no requiere rebuild)
 - **Haptics:** expo-haptics (requiere dev build nativo)
-- **Idioma:** Español (Argentina) - usar "vos" en lugar de "tú"
+- **Idioma:** Español (Uruguay) - usar "vos" en lugar de "tú"
 
 ## Estructura del Proyecto
 ```
