@@ -19,62 +19,64 @@ import { useUpdateProfile } from "@/hooks/useProfile";
 import Colors from "@/constants/Colors";
 import { showSuccess, showError } from "@/lib/toast";
 
-// Zone definitions with percentages of VAM
-// Lower percentage = faster pace (more intense)
-// Higher percentage = slower pace (less intense)
+// Zone definitions based on coach's training plan
+// %VAM values: percentage of VAM pace (higher % = faster)
+// Pace multiplier: 100 / %VAM (e.g. 70% VAM → 100/70 = 1.43x slower)
 const ZONES = [
   {
-    name: "R1-Recuperación",
     shortName: "R1",
-    percentage: 167, // 100/60 = 1.67
-    color: "#00BFFF",
-    zone: 1,
+    name: "Recuperación Activa",
+    description: "Muy Suave",
+    rpe: "1-2",
+    vamPercentMax: 70, // ≤70%
+    paceMultiplier: 100 / 70, // slowest boundary
+    color: "#22c55e",
   },
   {
-    name: "R2-Aeróbico",
     shortName: "R2",
-    percentageRange: [167, 143], // 100/60, 100/70
-    color: "#00FF00",
-    zone: 1,
+    name: "Aeróbico Continuo",
+    description: "Suave - Fácil",
+    rpe: "3-4",
+    vamPercentRange: [70, 75],
+    paceMultiplierRange: [100 / 70, 100 / 75],
+    color: "#84cc16",
   },
   {
-    name: "R3-Tempo",
     shortName: "R3",
-    percentageRange: [143, 133], // 100/70, 100/75
-    color: "#FFFF00",
-    zone: 2,
+    name: "Moderado",
+    description: "Ligero cómodo",
+    rpe: "5-6",
+    vamPercentRange: [75, 80],
+    paceMultiplierRange: [100 / 75, 100 / 80],
+    color: "#eab308",
   },
   {
-    name: "R4-SubUmbral",
     shortName: "R4",
-    percentageRange: [125, 118], // 100/80, 100/85
-    color: "#FFFF00",
-    zone: 2,
+    name: "Ágil",
+    description: "Duro Controlado",
+    rpe: "7-8",
+    vamPercentRange: [82, 88],
+    paceMultiplierRange: [100 / 82, 100 / 88],
+    color: "#f97316",
   },
   {
-    name: "R5-SupUmbral",
     shortName: "R5",
-    percentageRange: [111, 105], // 100/90, 100/95
-    color: "#FFA500",
-    zone: 3,
+    name: "Exigente",
+    description: "Respiración Agitada",
+    rpe: "9",
+    vamPercentRange: [90, 95],
+    paceMultiplierRange: [100 / 90, 100 / 95],
+    color: "#ef4444",
   },
   {
-    name: "R6-Vo2",
     shortName: "R6",
-    percentageRange: [100, 83], // 100/100, 100/120
-    color: "#FF0000",
-    zone: 3,
+    name: "Muy Exigente",
+    description: "Máximo esfuerzo",
+    rpe: "10",
+    vamPercentMin: 100, // ≥100%
+    paceMultiplier: 100 / 100, // fastest boundary
+    color: "#dc2626",
   },
-];
-
-// VAM percentages for display (original percentages)
-const ZONE_PERCENTAGES = [
-  { single: 60 },
-  { range: [60, 70] },
-  { range: [70, 75] },
-  { range: [80, 85] },
-  { range: [90, 95] },
-  { range: [100, 120] },
 ];
 
 // Parse pace string "4:30" to total seconds
@@ -97,11 +99,11 @@ function formatPace(totalSeconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-// Calculate pace for a given percentage
-// percentage > 100 means slower (recovery)
-// percentage < 100 means faster (intense)
-function calculateZonePace(vamSeconds: number, percentage: number): string {
-  const paceSeconds = (vamSeconds * percentage) / 100;
+// Calculate pace for a given multiplier percentage
+// multiplier > 100 means slower (recovery)
+// multiplier = 100 means at VAM pace
+function calculateZonePace(vamSeconds: number, multiplierPercent: number): string {
+  const paceSeconds = (vamSeconds * multiplierPercent) / 100;
   return formatPace(paceSeconds);
 }
 
@@ -279,6 +281,11 @@ export default function ZonesScreen() {
                 %VAM
               </Text>
               <Text
+                style={[styles.headerCell, styles.rpeCell, { color: colors.text }]}
+              >
+                RPE
+              </Text>
+              <Text
                 style={[styles.headerCell, styles.paceCell, { color: colors.text }]}
               >
                 Ritmo
@@ -289,30 +296,32 @@ export default function ZonesScreen() {
           {/* Table Body */}
           <View style={[styles.tableBody, { backgroundColor: colors.card }]}>
             {ZONES.map((zone, index) => {
-              const zonePercent = ZONE_PERCENTAGES[index];
-              const isRange = zone.percentageRange !== undefined;
-
               let paceDisplay: string;
               let percentDisplay: string;
 
-              if (isRange) {
-                const paceStart = calculateZonePace(
+              if (zone.paceMultiplierRange) {
+                const paceSlow = calculateZonePace(
                   vamSeconds,
-                  zone.percentageRange![0]
+                  zone.paceMultiplierRange[0] * 100
                 );
-                const paceEnd = calculateZonePace(
+                const paceFast = calculateZonePace(
                   vamSeconds,
-                  zone.percentageRange![1]
+                  zone.paceMultiplierRange[1] * 100
                 );
-                paceDisplay = `${paceStart} - ${paceEnd}`;
-                percentDisplay = `${zonePercent.range![0]}-${zonePercent.range![1]}%`;
+                paceDisplay = `${paceSlow} - ${paceFast}`;
+                percentDisplay = `${zone.vamPercentRange![0]}-${zone.vamPercentRange![1]}%`;
+              } else if (zone.vamPercentMax) {
+                // R1: ≤70%
+                paceDisplay = `≥ ${calculateZonePace(vamSeconds, zone.paceMultiplier! * 100)}`;
+                percentDisplay = `≤${zone.vamPercentMax}%`;
               } else {
-                paceDisplay = calculateZonePace(vamSeconds, zone.percentage!);
-                percentDisplay = `${zonePercent.single}%`;
+                // R6: ≥100%
+                paceDisplay = `≤ ${calculateZonePace(vamSeconds, zone.paceMultiplier! * 100)}`;
+                percentDisplay = `≥${zone.vamPercentMin}%`;
               }
 
               return (
-                <View key={zone.name}>
+                <View key={zone.shortName}>
                   <View style={styles.tableRow}>
                     <View style={[styles.zoneCell, styles.zoneCellContent]}>
                       <View
@@ -331,7 +340,7 @@ export default function ZonesScreen() {
                             { color: colors.textSecondary },
                           ]}
                         >
-                          {zone.name.split("-")[1]}
+                          {zone.name}
                         </Text>
                       </View>
                     </View>
@@ -347,6 +356,15 @@ export default function ZonesScreen() {
                     <Text
                       style={[
                         styles.cell,
+                        styles.rpeCell,
+                        { color: colors.text },
+                      ]}
+                    >
+                      {zone.rpe}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
                         styles.paceCell,
                         { color: colors.tint },
                       ]}
@@ -354,6 +372,14 @@ export default function ZonesScreen() {
                       {paceDisplay}
                     </Text>
                   </View>
+                  <Text
+                    style={[
+                      styles.zoneDescription,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {zone.description}
+                  </Text>
                   {index < ZONES.length - 1 && (
                     <View
                       style={[styles.divider, { backgroundColor: colors.border }]}
@@ -362,35 +388,6 @@ export default function ZonesScreen() {
                 </View>
               );
             })}
-          </View>
-
-          {/* Zone Groups Legend */}
-          <View style={styles.legendSection}>
-            <Text style={[styles.legendTitle, { color: colors.textSecondary }]}>
-              Grupos de Zonas
-            </Text>
-            <View style={styles.legendRow}>
-              <View style={[styles.legendItem, { backgroundColor: colors.card }]}>
-                <View style={[styles.legendColor, { backgroundColor: "#00BFFF" }]} />
-                <View style={[styles.legendColor, { backgroundColor: "#00FF00" }]} />
-                <Text style={[styles.legendText, { color: colors.text }]}>
-                  Zona 1 - Base
-                </Text>
-              </View>
-              <View style={[styles.legendItem, { backgroundColor: colors.card }]}>
-                <View style={[styles.legendColor, { backgroundColor: "#FFFF00" }]} />
-                <Text style={[styles.legendText, { color: colors.text }]}>
-                  Zona 2 - Umbral
-                </Text>
-              </View>
-              <View style={[styles.legendItem, { backgroundColor: colors.card }]}>
-                <View style={[styles.legendColor, { backgroundColor: "#FFA500" }]} />
-                <View style={[styles.legendColor, { backgroundColor: "#FF0000" }]} />
-                <Text style={[styles.legendText, { color: colors.text }]}>
-                  Zona 3 - Alta
-                </Text>
-              </View>
-            </View>
           </View>
         </View>
       ) : (
@@ -577,6 +574,10 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
+  rpeCell: {
+    flex: 0.6,
+    textAlign: "center",
+  },
   paceCell: {
     flex: 1.5,
     textAlign: "right",
@@ -584,39 +585,16 @@ const styles = StyleSheet.create({
   cell: {
     fontSize: 14,
   },
+  zoneDescription: {
+    fontSize: 11,
+    fontStyle: "italic",
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    marginLeft: 16,
+  },
   divider: {
     height: 1,
     marginLeft: 28,
-  },
-  legendSection: {
-    marginTop: 16,
-  },
-  legendTitle: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  legendRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  legendItem: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    borderRadius: 10,
-    gap: 4,
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-  },
-  legendText: {
-    fontSize: 11,
-    marginLeft: 4,
   },
   emptyState: {
     borderRadius: 16,
