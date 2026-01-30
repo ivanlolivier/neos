@@ -135,7 +135,7 @@ export default function EditProfileScreen() {
             style={styles.closeButton}
             onPress={() => router.back()}
           >
-            <FontAwesome name="times" size={24} color={colors.text} />
+            <FontAwesome name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>
             Editar perfil

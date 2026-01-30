@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
   Linking,
 } from "react-native";
-import { Stack } from "expo-router";
-import { format } from "date-fns";
+import { Stack, useRouter } from "expo-router";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import {
@@ -150,6 +151,8 @@ function RaceCard({
 export default function RacesScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const { data: races, isLoading, refetch, isRefetching } = useRaces(100);
 
@@ -169,16 +172,21 @@ export default function RacesScreen() {
   const sortedMonths = racesByMonth ? Object.keys(racesByMonth).sort() : [];
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: "Próximas Carreras",
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerBackTitle: "Inicio",
-        }}
-      />
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View style={[styles.customHeader, { paddingTop: insets.top }]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <FontAwesome name="arrow-left" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Próximas Carreras
+        </Text>
+        <View style={styles.backButton} />
+      </View>
 
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -193,9 +201,6 @@ export default function RacesScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            Carreras en Uruguay
-          </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             {races?.length ?? 0} carreras próximas
           </Text>
@@ -209,7 +214,7 @@ export default function RacesScreen() {
           sortedMonths.map((monthKey) => (
             <View key={monthKey} style={styles.monthSection}>
               <Text style={[styles.monthTitle, { color: colors.textSecondary }]}>
-                {format(new Date(monthKey + "-01"), "MMMM yyyy", { locale: es })}
+                {format(parseISO(monthKey + "-01"), "MMMM yyyy", { locale: es })}
               </Text>
               <View style={styles.racesList}>
                 {racesByMonth![monthKey].map((race) => (
@@ -239,11 +244,14 @@ export default function RacesScreen() {
           Datos de dondecorrer.com
         </Text>
       </ScrollView>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -251,16 +259,26 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
-  header: {
-    marginBottom: 24,
+  customHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
+  backButton: {
+    width: 40,
+    alignItems: "flex-start",
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  header: {
+    marginBottom: 16,
   },
   subtitle: {
     fontSize: 14,
-    marginTop: 4,
   },
   loadingContainer: {
     padding: 60,
