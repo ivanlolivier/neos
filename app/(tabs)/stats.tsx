@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     margin: 16,
     marginTop: 8,
-    marginBottom: 24,
+    marginBottom: 16,
     padding: 16,
     paddingBottom: 12,
     borderRadius: 16,
