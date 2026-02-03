@@ -17,6 +17,7 @@ type UpdateProfileData = {
   race_experience?: string | null;
   sport_goals?: string | null;
   extra_sport_goals?: string | null;
+  max_attendance_streak?: number;
 };
 
 export function useUpdateProfile() {

@@ -421,6 +421,11 @@ export default function HomeScreen() {
         contentContainerStyle={styles.contentContainer}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={colors.tint} />}
       >
+        {/* Brand */}
+        <View style={styles.logoContainer}>
+          <Text style={[styles.brandName, { color: colors.text }]}>neos</Text>
+        </View>
+
         {announcements && announcements.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionHeader, { color: colors.text }]}>Anuncios</Text>
@@ -517,6 +522,17 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 16,
     paddingBottom: 32,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  brandName: {
+    fontSize: 28,
+    fontWeight: "bold",
+    letterSpacing: 4,
+    textTransform: "uppercase",
+    paddingRight: 4,
   },
   header: {
     marginBottom: 24,

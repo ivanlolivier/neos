@@ -1,8 +1,10 @@
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
 
 import Colors from "@/constants/Colors";
 import { useColorScheme } from "@/components/useColorScheme";
+import { useUnreadCount } from "@/hooks/useNotifications";
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>["name"];
@@ -10,6 +12,55 @@ function TabBarIcon(props: {
 }) {
   return <FontAwesome size={24} style={{ marginBottom: -3 }} {...props} />;
 }
+
+function NotificationBellIcon({ color }: { color: string }) {
+  const { data: unreadCount } = useUnreadCount();
+  const hasUnread = (unreadCount ?? 0) > 0;
+
+  return (
+    <TouchableOpacity
+      onPress={() => router.push("/notification-inbox")}
+      style={bellStyles.button}
+    >
+      <FontAwesome
+        name={hasUnread ? "bell" : "bell-o"}
+        size={20}
+        color={color}
+      />
+      {hasUnread && (
+        <View style={bellStyles.badge}>
+          <Text style={bellStyles.badgeText}>
+            {unreadCount! > 99 ? "99+" : unreadCount}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+const bellStyles = StyleSheet.create({
+  button: {
+    marginRight: 16,
+    position: "relative",
+  },
+  badge: {
+    position: "absolute",
+    top: -6,
+    right: -10,
+    backgroundColor: "#ef4444",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+});
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -69,6 +120,9 @@ export default function TabLayout() {
           title: "Comunidad",
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="comments" color={color} />
+          ),
+          headerRight: () => (
+            <NotificationBellIcon color={Colors[colorScheme].text} />
           ),
         }}
       />

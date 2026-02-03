@@ -27,6 +27,7 @@ export type Database = {
           garmin_access_token: string | null;
           garmin_refresh_token: string | null;
           healthkit_enabled: boolean;
+          max_attendance_streak: number;
           notification_preferences: Json;
           created_at: string;
           updated_at: string;
@@ -48,6 +49,7 @@ export type Database = {
           garmin_access_token?: string | null;
           garmin_refresh_token?: string | null;
           healthkit_enabled?: boolean;
+          max_attendance_streak?: number;
           notification_preferences?: Json;
           created_at?: string;
           updated_at?: string;
@@ -69,6 +71,7 @@ export type Database = {
           garmin_access_token?: string | null;
           garmin_refresh_token?: string | null;
           healthkit_enabled?: boolean;
+          max_attendance_streak?: number;
           notification_preferences?: Json;
           created_at?: string;
           updated_at?: string;
@@ -485,6 +488,53 @@ export type Database = {
           expires_at?: string | null;
         };
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type:
+            | "like"
+            | "training_reminder"
+            | "weekend_plan"
+            | "streak_warning"
+            | "announcement";
+          title: string;
+          body: string;
+          data: Json;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type:
+            | "like"
+            | "training_reminder"
+            | "weekend_plan"
+            | "streak_warning"
+            | "announcement";
+          title: string;
+          body?: string;
+          data?: Json;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?:
+            | "like"
+            | "training_reminder"
+            | "weekend_plan"
+            | "streak_warning"
+            | "announcement";
+          title?: string;
+          body?: string;
+          data?: Json;
+          is_read?: boolean;
+          created_at?: string;
+        };
+      };
       push_tokens: {
         Row: {
           id: string;
@@ -519,7 +569,12 @@ export type Database = {
       };
     };
     Views: {};
-    Functions: {};
+    Functions: {
+      get_badge_stats: {
+        Args: { user_uuid: string };
+        Returns: { total_km: number; total_activities: number };
+      };
+    };
     Enums: {};
   };
 };
@@ -545,3 +600,4 @@ export type Post = Tables<"posts">;
 export type PostPhoto = Tables<"post_photos">;
 export type PersonalRecord = Tables<"personal_records">;
 export type Announcement = Tables<"announcements">;
+export type Notification = Tables<"notifications">;

@@ -13,6 +13,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useColorScheme } from "@/components/useColorScheme";
 import { useAuth } from "@/providers/AuthProvider";
 import { useAttendanceStreak } from "@/hooks/useTrainings";
+import { useAchievements } from "@/hooks/useAchievements";
 import Colors from "@/constants/Colors";
 
 export default function ProfileScreen() {
@@ -20,6 +21,7 @@ export default function ProfileScreen() {
   const colors = Colors[colorScheme];
   const { profile, signOut, isCoach } = useAuth();
   const { data: streak } = useAttendanceStreak();
+  const { unlockedCount, totalCount } = useAchievements();
 
   const handleSignOut = () => {
     Alert.alert("Cerrar sesión", "¿Estás seguro que querés cerrar sesión?", [
@@ -193,6 +195,32 @@ export default function ProfileScreen() {
               <Text style={[styles.menuItemText, { color: colors.text }]}>
                 Mis Records
               </Text>
+            </View>
+            <FontAwesome
+              name="chevron-right"
+              size={14}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push("/achievements")}
+          >
+            <View style={styles.menuItemLeft}>
+              <FontAwesome name="star" size={20} color={colors.tint} />
+              <View>
+                <Text style={[styles.menuItemText, { color: colors.text }]}>
+                  Mis Logros
+                </Text>
+                <Text
+                  style={[styles.menuItemSubtext, { color: colors.textSecondary }]}
+                >
+                  {unlockedCount} / {totalCount} desbloqueados
+                </Text>
+              </View>
             </View>
             <FontAwesome
               name="chevron-right"

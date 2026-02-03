@@ -239,6 +239,7 @@ export function useAddActivity() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       queryClient.invalidateQueries({ queryKey: ["activity-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["badge-stats"] });
     },
   });
 }
@@ -290,6 +291,7 @@ export function useUpdateActivity() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       queryClient.invalidateQueries({ queryKey: ["activity-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["badge-stats"] });
     },
   });
 }
@@ -306,6 +308,7 @@ export function useDeleteActivity() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       queryClient.invalidateQueries({ queryKey: ["activity-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["badge-stats"] });
     },
   });
 }
